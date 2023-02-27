@@ -2,13 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <UserSecretsId>c9ee01b0-14a9-4b40-9f72-6a297d344380</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <Folder Include="Components\" />
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 

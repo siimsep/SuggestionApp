@@ -1,0 +1,134 @@
+﻿@page "/Details/{Id}"
+@inject ISuggestionData suggestionData
+@inject NavigationManager navManager
+@inject IUserData userData
+@inject AuthenticationStateProvider authProvider
+
+<h1>Suggestion Details</h1>
+<div>
+    <div>
+        @if(suggestion is not null)
+        {
+            <div>
+                <div>
+                    <div @onclick="VoteUp">
+                        <div>@GetUpvoteTopText()</div>
+                        <span class="oi oi-caret-top"></span>
+                        <div>@GetUpvoteTopText()</div>
+
+                    </div>
+                    <div>
+                        @suggestion.DateCreated.ToString("MM.dd.yyyy")
+                    </div>
+                </div>
+                <div>
+                    <div>@suggestion.Suggestion</div>
+                    <div>@suggestion.Author.DisplayName</div>
+                    <div>@suggestion.Description</div>
+                    <div>
+                        <div>
+                            @suggestion.Category.CategoryName
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button @onclick="ClosePage"></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (suggestion?.SuggestionStatus is not null)
+{
+    <div>
+        <div>
+            <div></div>
+            <div>
+                <div>
+                    @suggestion.SuggestionStatus.StatusName
+                </div>
+                <div>
+                    @((MarkupString)suggestion.OwnerNotes)
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private SuggestionModel suggestion;
+    private UserModel loggedInUser;
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        suggestion = await suggestionData.GetSuggestion(Id);
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo("/");
+    }
+
+    private string GetUpvoteTopText()
+    {
+        if (suggestion.UserVotes?.Count > 0)
+        {
+            return suggestion.UserVotes.Count.ToString("00");
+        }
+        else
+        {
+            if (suggestion.Author.Id == loggedInUser?.Id)
+            {
+                return "Awaiting";
+            }
+            else
+            {
+                return "Click To";
+            }
+        }
+    }
+    private string GetUpvoteBottomText()
+    {
+        if (suggestion.UserVotes?.Count > 0)
+        {
+            return "Upvotes";
+        }
+        else
+        {
+            return "Upvote";
+        }
+    }
+
+
+    private async Task VoteUp()
+    {
+        if (loggedInUser is not null)
+        {
+            if (suggestion.Author.Id == loggedInUser.Id)
+            {
+                // cant vote on own suggestion
+                return;
+            }
+
+            // check if user is in hashlist of votes
+            if (suggestion.UserVotes.Add(loggedInUser.Id) == false)
+            {
+                suggestion.UserVotes.Remove(loggedInUser.Id);
+            }
+
+            await suggestionData.UpvoteSuggestion(suggestion.Id, loggedInUser.Id);
+
+           
+        }
+        else
+        {
+            navManager.NavigateTo("/MicrosoftIdentity/Account/SignIn", true);
+        }
+    }
+}
